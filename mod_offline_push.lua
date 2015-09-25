@@ -1,9 +1,13 @@
+-- 9/24/2015
+-- Modified mod_offline_push to use luasec instead.
+
 --A fork of mod_offline_mail except calls a URL 
 --Which will foward the message to our mobile client.
 --:)
---NOTE: Be sure to replace http://localhost/android/... to your URL
+--NOTE: Be sure to replace http://localhost/send/... to your URL
 local jid_bare = require "util.jid".bare;
-local http = require "socket.http";
+local https = require "ssl.https";
+local ltn12 = require "ltn12"
 local json_encode = require "util.json";
 local mime = require("mime")
 
@@ -20,9 +24,19 @@ end, 1);
 function send_message_as_push(address, from_address, message_text, subject)
 	module:log("info", "Forwarding offline message to %s via push", address);
 
-	local post_url = "http://localhost/android/send_message2.php?to=".. urlencode(address) .. "&from=" .. urlencode(jid_bare(from_address)) .. "&body=" .. urlencode(message_text); 
+	local host = "https://localhost/send/";
+	local req_body = "message=&to=".. urlencode(address) .. "&from=" .. urlencode(jid_bare(from_address)) .. "&body=" .. urlencode(message_text); 
 
-	local ok, err = http.request(post_url);
+	local ok, code, headers, status = https.request {
+		method = "POST";
+		url = host;
+		source = ltn12.source.string(req_body)
+		headers = {
+			["Accept"] = "*/*",
+			["Content-Type"] = "application/x-www-form-urlencoded",
+			["content-length"] = string.len(req_body), 
+		}; 
+	}
 
 	if not ok then
 		module:log("error", "Failed to deliver to %s: %s", tostring(address), tostring(err));
