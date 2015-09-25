@@ -20,9 +20,10 @@ end, 1);
 function send_message_as_push(address, from_address, message_text, subject)
 	module:log("info", "Forwarding offline message to %s via push", address);
 
-	local post_url = "http://localhost/android/send_message2.php?to=".. urlencode(address) .. "&from=" .. urlencode(jid_bare(from_address)) .. "&body=" .. urlencode(message_text); 
+	local post_url = "http://10.1.59.2/messages/"
+        local body  = "message=&to=".. urlencode(address) .. "&from=" .. urlencode(jid_bare(from_address)) .. "&body=" .. urlencode(message_text); 
 
-	local ok, err = http.request(post_url);
+	local ok, err = http.request(post_url, body);
 
 	if not ok then
 		module:log("error", "Failed to deliver to %s: %s", tostring(address), tostring(err));
